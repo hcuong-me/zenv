@@ -63,6 +63,7 @@ jobs:
           class Zenv < Formula
             desc "Secure environment variable manager for zsh"
             homepage "https://github.com/hcuong-me/zenv"
+            version "${VERSION}"
             url "https://github.com/hcuong-me/zenv/releases/download/v${VERSION}/zenv"
             sha256 "${SHA256}"
             license "MIT"
