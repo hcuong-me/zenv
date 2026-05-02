@@ -56,16 +56,15 @@ jobs:
 
       - name: Update formula
         run: |
-          VERSION="${{ needs.release.outputs.version }}"
-          SHA256="${{ needs.release.outputs.sha256 }}"
+          mkdir -p homebrew-tap/Formula
 
           cat > homebrew-tap/Formula/zenv.rb << 'EOF'
           class Zenv < Formula
             desc "Secure environment variable manager for zsh"
             homepage "https://github.com/hcuong-me/zenv"
-            version "${VERSION}"
-            url "https://github.com/hcuong-me/zenv/releases/download/v${VERSION}/zenv"
-            sha256 "${SHA256}"
+            url "https://github.com/hcuong-me/zenv/releases/download/v${{ needs.release.outputs.version }}/zenv"
+            version "${{ needs.release.outputs.version }}"
+            sha256 "${{ needs.release.outputs.sha256 }}"
             license "MIT"
 
             depends_on :macos
