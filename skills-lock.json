@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "skills": {
+    "golang-patterns": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "computedHash": "67c25e95cec3f3166c2efefd5f4502863a1246c6f742b8cbcd2e2864d2a8182a"
+    },
+    "golang-pro": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "computedHash": "12b4cac8f65228f82cbc26f0da9232aba87ffa45ccd01afa3998fb8ec61dc288"
+    },
+    "grill-plan": {
+      "source": "GreeNxGit/solo-agent-hub",
+      "sourceType": "github",
+      "computedHash": "a80758ce8e536d96b47c2c1e012bd7a03905d1f440d1dc046172cb1183717237"
+    },
+    "idea-refine": {
+      "source": "GreeNxGit/solo-agent-hub",
+      "sourceType": "github",
+      "computedHash": "fd3f48eee08e05c405358a03c500e93459213df00c51d3aee605376d68b51b8b"
+    },
+    "implement-specs": {
+      "source": "GreeNxGit/solo-agent-hub",
+      "sourceType": "github",
+      "computedHash": "580faf1e47844389d5700f2030dc8532dd95dd48f69ee7889b6d3ba130021742"
+    },
+    "write-product-spec": {
+      "source": "GreeNxGit/solo-agent-hub",
+      "sourceType": "github",
+      "computedHash": "c1c1b9994bc3c8514dc8e9890b5ed5a34fa64956b930a9e4836234c978d82eec"
+    },
+    "write-tech-spec": {
+      "source": "GreeNxGit/solo-agent-hub",
+      "sourceType": "github",
+      "computedHash": "ddd10a73e66a2b2cdb668125330eda9bfa3ba45d3583628e98718b75ce8fb163"
+    }
+  }
+}

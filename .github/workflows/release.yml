@@ -1,0 +1,95 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      sha256: ${{ steps.get_sha.outputs.sha256 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build binary
+        run: |
+          mkdir -p dist
+          go build -v -o dist/zenv ./cmd/zenv
+
+      - name: Calculate SHA256
+        id: get_sha
+        run: echo "sha256=$(shasum -a 256 dist/zenv | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/zenv
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-homebrew-tap:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout homebrew-tap repo
+        uses: actions/checkout@v4
+        with:
+          repository: hcuong-me/homebrew-tap
+          token: ${{ secrets.TAP_GITHUB_TOKEN }}
+          path: homebrew-tap
+
+      - name: Update formula
+        run: |
+          VERSION="${{ needs.release.outputs.version }}"
+          SHA256="${{ needs.release.outputs.sha256 }}"
+
+          cat > homebrew-tap/Formula/zenv.rb << 'EOF'
+          class Zenv < Formula
+            desc "Secure environment variable manager for zsh"
+            homepage "https://github.com/hcuong-me/zenv"
+            url "https://github.com/hcuong-me/zenv/releases/download/v${VERSION}/zenv"
+            sha256 "${SHA256}"
+            license "MIT"
+
+            depends_on :macos
+
+            def install
+              bin.install "zenv"
+            end
+
+            test do
+              system "#{bin}/zenv", "version"
+            end
+          end
+          EOF
+
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.TAP_GITHUB_TOKEN }}
+          path: homebrew-tap
+          branch: "zenv-${{ needs.release.outputs.version }}"
+          title: "zenv: update to v${{ needs.release.outputs.version }}"
+          body: |
+            Update zenv formula to version ${{ needs.release.outputs.version }}
+
+            - SHA256: ${{ needs.release.outputs.sha256 }}
+            - Release: https://github.com/hcuong-me/zenv/releases/tag/v${{ needs.release.outputs.version }}
+          commit-message: "zenv: update to v${{ needs.release.outputs.version }}"
+          delete-branch: true
