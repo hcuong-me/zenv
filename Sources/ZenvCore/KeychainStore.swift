@@ -18,7 +18,8 @@ public enum KeychainStoreError: Error, Equatable, Sendable {
 }
 
 public struct KeychainStore: Sendable {
-    public static let defaultService = "dev.hcuong.zenv"
+    public static let defaultService = "me.hcuong.zenv"
+    public static let legacyService = "dev.hcuong.zenv"
 
     public let service: String
     public let keychainPath: String?
@@ -125,6 +126,39 @@ public struct KeychainStore: Sendable {
             }
             return EnvVar(key: key, value: value)
         }
+    }
+
+    /// Copy items from `legacyService` then delete them there.
+    /// Existing keys on this service keep their current value.
+    public func adoptLegacyItems(from legacyService: String) throws -> [String] {
+        if service == legacyService {
+            return []
+        }
+        let legacy = KeychainStore(service: legacyService, keychainPath: keychainPath)
+        let keys = try legacy.listKeys()
+        guard !keys.isEmpty else {
+            return []
+        }
+        let existing = Swift.Set(try listKeys())
+        var moved: [String] = []
+        for key in keys {
+            if !existing.contains(key), let value = try legacy.get(key: key) {
+                try put(key: key, value: value)
+            }
+            try legacy.delete(key: key, missingOK: true)
+            moved.append(key)
+        }
+        return moved
+    }
+
+    public func adoptLegacyItemsIfNeeded() throws -> [String] {
+        guard keychainPath == nil else {
+            return []
+        }
+        guard service == Self.defaultService else {
+            return []
+        }
+        return try adoptLegacyItems(from: Self.legacyService)
     }
 
     private func copyAccounts() throws -> [String] {

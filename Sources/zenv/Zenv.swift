@@ -13,6 +13,14 @@ struct Zenv: ParsableCommand {
     )
 }
 
+enum LiveStore {
+    static func open() throws -> KeychainStore {
+        let store = KeychainStore.fromEnvironment()
+        _ = try store.adoptLegacyItemsIfNeeded()
+        return store
+    }
+}
+
 struct Version: ParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Show version"
@@ -29,7 +37,7 @@ struct Env: ParsableCommand {
     )
 
     func run() throws {
-        let vars = try KeychainStore.fromEnvironment().exportAll()
+        let vars = try LiveStore.open().exportAll()
         for item in vars {
             print(ExportRenderer.exportLine(key: item.key, value: item.value))
         }
@@ -42,7 +50,7 @@ struct Keys: ParsableCommand {
     )
 
     func run() throws {
-        for key in try KeychainStore.fromEnvironment().listKeys() {
+        for key in try LiveStore.open().listKeys() {
             print(key)
         }
     }
@@ -58,7 +66,7 @@ struct Put: ParsableCommand {
     @Option var value: String
 
     func run() throws {
-        try KeychainStore.fromEnvironment().put(key: key, value: value)
+        try LiveStore.open().put(key: key, value: value)
     }
 }
 
@@ -72,7 +80,7 @@ struct Delete: ParsableCommand {
     @Option var key: String
 
     func run() throws {
-        try KeychainStore.fromEnvironment().delete(key: key)
+        try LiveStore.open().delete(key: key)
     }
 }
 
