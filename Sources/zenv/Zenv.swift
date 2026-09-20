@@ -8,7 +8,7 @@ struct Zenv: ParsableCommand {
         commandName: "zenv",
         abstract: "Secure shell environment manager for macOS Zsh",
         version: "1.0.0",
-        subcommands: [Env.self, Keys.self, Version.self, Put.self, Delete.self],
+        subcommands: [Doctor.self, Env.self, Keys.self, Version.self, Put.self, Delete.self],
         defaultSubcommand: nil
     )
 }
@@ -75,3 +75,76 @@ struct Delete: ParsableCommand {
         try KeychainStore.fromEnvironment().delete(key: key)
     }
 }
+
+struct Doctor: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Check and configure the Zsh hook"
+    )
+
+    @Flag(name: .long, help: "Install the hook without a prompt")
+    var yes = false
+
+    func run() throws {
+        if !ShellCheck.isZsh() {
+            print("Error: Only Zsh is supported.")
+            print("   Current shell: \(ProcessInfo.processInfo.environment["SHELL"] ?? "")")
+            throw ExitCode.failure
+        }
+        print("Using Zsh shell")
+
+        let paths = ZenvPaths.live()
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: paths.zshrc.path) {
+            print("Error: ~/.zshrc not found")
+            print("   Please create it first: touch ~/.zshrc")
+            throw ExitCode.failure
+        }
+        print("~/.zshrc exists")
+
+        let zshrc = try String(contentsOf: paths.zshrc, encoding: .utf8)
+        if Hook.isInstalled(in: zshrc) {
+            print("zenv shell hook is installed")
+        } else {
+            print("zenv shell hook is not installed")
+            let ok: Bool
+            if yes {
+                ok = true
+            } else {
+                ok = try TerminalPrompt().confirm(
+                    title: "Install Shell Hook?",
+                    description: "This will add a script to ~/.zshrc that loads Keychain secrets and masks env/printenv."
+                )
+            }
+            if ok {
+                try HookInstaller.install(paths: paths)
+                print("Shell hook installed successfully")
+                print("Please restart your terminal or run: source ~/.zshrc")
+            } else {
+                print("Installation cancelled.")
+            }
+        }
+
+        if fm.fileExists(atPath: paths.zshenv.path) {
+            let content = try String(contentsOf: paths.zshenv, encoding: .utf8)
+            let leftover = ExportParser.parseManagedLines(content)
+            if !leftover.isEmpty {
+                let ok: Bool
+                if yes {
+                    ok = true
+                } else {
+                    ok = try TerminalPrompt().confirm(
+                        title: "Import ~/.zshenv into Keychain?",
+                        description: "Found \(leftover.count) zenv export line(s). Import them and strip those lines from the file."
+                    )
+                }
+                if ok {
+                    let imported = try ZshenvImport.importAndStrip(zshenvURL: paths.zshenv, store: KeychainStore.fromEnvironment())
+                    print("Imported \(imported.count) variable(s) from ~/.zshenv")
+                }
+            }
+        }
+
+        print("Doctor check complete!")
+    }
+}
+
