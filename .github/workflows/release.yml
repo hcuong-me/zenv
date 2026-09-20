@@ -17,11 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-
       - name: Get version from tag
         id: get_version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
@@ -29,11 +24,12 @@ jobs:
       - name: Build binary
         run: |
           mkdir -p dist
-          go build -v -o dist/zenv ./cmd/zenv
+          swift build -c release
+          cp -f .build/release/zenv dist/zenv
 
       - name: Calculate SHA256
         id: get_sha
-        run: echo "sha256=$(shasum -a 256 dist/zenv | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+        run: echo "sha256=$(shasum -a 256 dist/zenv | cut -d ' ' -f1)" >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: softprops/action-gh-release@v2

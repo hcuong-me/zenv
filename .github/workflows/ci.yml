@@ -4,49 +4,35 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
+  test:
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-      - name: Install golangci-lint
-        run: |
-          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.1
-
-      - name: Run golangci-lint
-        run: $(go env GOPATH)/bin/golangci-lint run --timeout=5m ./...
+      - name: Run tests
+        run: swift test
 
   build:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-      - run: |
+      - name: Release build
+        run: |
           mkdir -p dist
-          go build -v -o dist/zenv ./cmd/zenv
+          swift build -c release
+          cp -f .build/release/zenv dist/zenv
       - uses: actions/upload-artifact@v4
         with:
           name: zenv-macos
           path: dist/zenv
 
-  test:
+  lint-arch:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-      - run: go test -v -race ./...
+      - name: Layer rules
+        run: bash scripts/lint-deps.sh
