@@ -68,16 +68,33 @@ public enum ListTable {
         }
         let headerKey = "KEY"
         let headerVal = "VALUE"
-        let width = max(headerKey.count, keys.map(\.count).max() ?? 0)
+        let masked = "********"
+        let keyWidth = max(headerKey.count, keys.map(\.count).max() ?? 0)
+        let valWidth = max(headerVal.count, masked.count)
+
+        func rule(_ left: String, _ mid: String, _ right: String) -> String {
+            left
+                + String(repeating: "─", count: keyWidth + 2)
+                + mid
+                + String(repeating: "─", count: valWidth + 2)
+                + right
+        }
+        func cell(_ text: String, width: Int) -> String {
+            text.padding(toLength: width, withPad: " ", startingAt: 0)
+        }
+        func row(_ key: String, _ value: String) -> String {
+            "│ \(cell(key, width: keyWidth)) │ \(cell(value, width: valWidth)) │"
+        }
+
         var rows = [
-            "┌─\(String(repeating: "─", count: width + 2))─┬──────────┐",
-            "│ \(headerKey.padding(toLength: width, withPad: " ", startingAt: 0)) │ \(headerVal) │",
-            "├─\(String(repeating: "─", count: width + 2))─┼──────────┤",
+            rule("┌", "┬", "┐"),
+            row(headerKey, headerVal),
+            rule("├", "┼", "┤"),
         ]
         for key in keys {
-            rows.append("│ \(key.padding(toLength: width, withPad: " ", startingAt: 0)) │ ******** │")
+            rows.append(row(key, masked))
         }
-        rows.append("└─\(String(repeating: "─", count: width + 2))─┴──────────┘")
+        rows.append(rule("└", "┴", "┘"))
         rows.append("")
         rows.append("\(keys.count) variable(s) stored in Keychain")
         return rows.joined(separator: "\n")
