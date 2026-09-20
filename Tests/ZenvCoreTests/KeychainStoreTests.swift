@@ -9,7 +9,7 @@ struct KeychainStoreTests {
         defer { try? FileManager.default.removeItem(at: dir) }
         let path = dir.appendingPathComponent("zenv.keychain").path
         try KeychainStore.createFileKeychain(at: path, password: "test")
-        let store = KeychainStore(service: "dev.hcuong.zenv.test", keychainPath: path)
+        let store = KeychainStore(service: "me.hcuong.zenv.test", keychainPath: path)
 
         try store.put(key: "stripe_key", value: "sk_live_1")
         #expect(try store.get(key: "stripe_key") == "sk_live_1")
@@ -22,13 +22,31 @@ struct KeychainStoreTests {
         #expect(try store.listKeys().isEmpty)
     }
 
+    @Test func adoptLegacyItemsMovesAccounts() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let path = dir.appendingPathComponent("zenv.keychain").path
+        try KeychainStore.createFileKeychain(at: path, password: "test")
+        let legacy = KeychainStore(service: KeychainStore.legacyService, keychainPath: path)
+        let store = KeychainStore(service: KeychainStore.defaultService, keychainPath: path)
+        try legacy.put(key: "OLD_KEY", value: "from-legacy")
+        try store.put(key: "KEEP", value: "already-new")
+        try legacy.put(key: "KEEP", value: "old-keep")
+        let moved = try store.adoptLegacyItems(from: KeychainStore.legacyService)
+        #expect(Swift.Set(moved) == ["KEEP", "OLD_KEY"])
+        #expect(try store.get(key: "OLD_KEY") == "from-legacy")
+        #expect(try store.get(key: "KEEP") == "already-new")
+        #expect(try legacy.listKeys().isEmpty)
+    }
+
     @Test func emptyStoreListsNothing() throws {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: dir) }
         let path = dir.appendingPathComponent("zenv.keychain").path
         try KeychainStore.createFileKeychain(at: path, password: "test")
-        let store = KeychainStore(service: "dev.hcuong.zenv.test", keychainPath: path)
+        let store = KeychainStore(service: "me.hcuong.zenv.test", keychainPath: path)
         #expect(try store.listKeys().isEmpty)
         #expect(try store.exportAll().isEmpty)
     }
