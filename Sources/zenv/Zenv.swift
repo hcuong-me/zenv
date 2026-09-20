@@ -1,5 +1,6 @@
 import ArgumentParser
 import Foundation
+import Security
 import ZenvCore
 
 @main
@@ -8,7 +9,7 @@ struct Zenv: ParsableCommand {
         commandName: "zenv",
         abstract: "Secure shell environment manager for macOS Zsh",
         version: "1.0.0",
-        subcommands: [Doctor.self, Env.self, Keys.self, Version.self, Put.self, Delete.self],
+        subcommands: [Doctor.self, Set.self, Ls.self, Rm.self, Migrate.self, Env.self, Keys.self, Version.self, Put.self, Delete.self],
         defaultSubcommand: nil
     )
 }
@@ -66,6 +67,7 @@ struct Delete: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "kc-delete",
         abstract: "Delete a stored secret (test helper)",
+        commandName: "kc-delete",
         shouldDisplay: false
     )
 
@@ -148,3 +150,126 @@ struct Doctor: ParsableCommand {
     }
 }
 
+struct Set: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Add or update an environment variable"
+    )
+
+    func run() throws {
+        if !ShellCheck.isZsh() {
+            print("Warning: zenv is designed for Zsh. Some features may not work correctly.")
+        }
+        let store = KeychainStore.fromEnvironment()
+        do {
+            guard let form = try SetForm.run(prompt: TerminalPrompt()) else {
+                return
+            }
+            let existing = Swift.Set(try store.listKeys())
+            let wasUpdate = existing.contains(form.key)
+            try store.put(key: form.key, value: form.value)
+            if wasUpdate {
+                print("Updated \(form.key)")
+            } else {
+                print("Added \(form.key)")
+            }
+            print("")
+            print("Run 'source ~/.zshrc' or restart your terminal to use this variable.")
+        } catch SetFormError.emptyValue {
+            print("Error: value cannot be empty")
+            throw ExitCode.failure
+        }
+    }
+}
+
+struct Ls: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "List managed environment variables",
+        aliases: ["list"]
+    )
+
+    func run() throws {
+        let keys = try KeychainStore.fromEnvironment().listKeys()
+        print(ListTable.render(keys: keys))
+    }
+}
+
+struct Rm: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Remove an environment variable",
+        aliases: ["remove", "delete"]
+    )
+
+    @Argument var key: String
+
+    func run() throws {
+        do {
+            try KeychainStore.fromEnvironment().delete(key: key)
+        } catch KeychainStoreError.unexpectedStatus(let status) where status == errSecItemNotFound {
+            print("Error: environment variable \(key.uppercased()) not found")
+            throw ExitCode.failure
+        }
+        unsetenv(key.uppercased())
+        print("Removed \(key.uppercased())")
+    }
+}
+
+struct Migrate: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Migrate export lines from ~/.zshrc into Keychain"
+    )
+
+    @Flag(name: .long, help: "Migrate every eligible export without a prompt")
+    var yes = false
+
+    func run() throws {
+        let paths = ZenvPaths.live()
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: paths.zshrc.path) else {
+            print("Error: ~/.zshrc not found.")
+            throw ExitCode.failure
+        }
+        let content = try String(contentsOf: paths.zshrc, encoding: .utf8)
+        let vars = ZenvCore.Migrate.parseExports(from: content)
+        if vars.isEmpty {
+            print("No environment variables found in ~/.zshrc.")
+            return
+        }
+        let selected: [EnvVar]
+        if yes {
+            selected = vars
+        } else {
+            print("Found \(vars.count) variable(s):")
+            for item in vars {
+                print("  \(item.key)")
+            }
+            let ok = try TerminalPrompt().confirm(
+                title: "Migrate these variables?",
+                description: "This will move \(vars.count) variable(s) from ~/.zshrc into Keychain."
+            )
+            if !ok {
+                print("Migration cancelled.")
+                return
+            }
+            selected = vars
+        }
+        let result = try ZenvCore.Migrate.apply(
+            vars: selected,
+            zshrcURL: paths.zshrc,
+            backupDir: paths.backupDir,
+            store: KeychainStore.fromEnvironment()
+        )
+        print("Migration complete!")
+        print("  - Migrated: \(result.migrated.count) variable(s)")
+        if !result.skipped.isEmpty {
+            print("  - Skipped (already stored): \(result.skipped.joined(separator: ", "))")
+        }
+        if !result.failed.isEmpty {
+            print("  - Failed: \(result.failed.joined(separator: ", "))")
+        }
+        if !result.migrated.isEmpty {
+            print("  - Backup: \(result.backupPath)")
+        }
+        print("")
+        print("Run 'source ~/.zshrc' to load the migrated variables.")
+    }
+}
