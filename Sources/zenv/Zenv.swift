@@ -14,6 +14,14 @@ struct Zenv: ParsableCommand {
     )
 }
 
+enum LiveStore {
+    static func open() throws -> KeychainStore {
+        let store = KeychainStore.fromEnvironment()
+        _ = try store.adoptLegacyItemsIfNeeded()
+        return store
+    }
+}
+
 struct Version: ParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Show version"
@@ -30,7 +38,7 @@ struct Env: ParsableCommand {
     )
 
     func run() throws {
-        let vars = try KeychainStore.fromEnvironment().exportAll()
+        let vars = try LiveStore.open().exportAll()
         for item in vars {
             print(ExportRenderer.exportLine(key: item.key, value: item.value))
         }
@@ -43,7 +51,7 @@ struct Keys: ParsableCommand {
     )
 
     func run() throws {
-        for key in try KeychainStore.fromEnvironment().listKeys() {
+        for key in try LiveStore.open().listKeys() {
             print(key)
         }
     }
@@ -59,7 +67,7 @@ struct Put: ParsableCommand {
     @Option var value: String
 
     func run() throws {
-        try KeychainStore.fromEnvironment().put(key: key, value: value)
+        try LiveStore.open().put(key: key, value: value)
     }
 }
 
@@ -73,7 +81,7 @@ struct Delete: ParsableCommand {
     @Option var key: String
 
     func run() throws {
-        try KeychainStore.fromEnvironment().delete(key: key)
+        try LiveStore.open().delete(key: key)
     }
 }
 
@@ -101,6 +109,12 @@ struct Doctor: ParsableCommand {
             throw ExitCode.failure
         }
         print("~/.zshrc exists")
+
+        let store = KeychainStore.fromEnvironment()
+        let moved = try store.adoptLegacyItemsIfNeeded()
+        if !moved.isEmpty {
+            print("Moved \(moved.count) item(s) from \(KeychainStore.legacyService) to \(store.service)")
+        }
 
         let zshrc = try String(contentsOf: paths.zshrc, encoding: .utf8)
         if Hook.isInstalled(in: zshrc) {
@@ -139,7 +153,7 @@ struct Doctor: ParsableCommand {
                     )
                 }
                 if ok {
-                    let imported = try ZshenvImport.importAndStrip(zshenvURL: paths.zshenv, store: KeychainStore.fromEnvironment())
+                    let imported = try ZshenvImport.importAndStrip(zshenvURL: paths.zshenv, store: store)
                     print("Imported \(imported.count) variable(s) from ~/.zshenv")
                 }
             }
@@ -158,7 +172,7 @@ struct Set: ParsableCommand {
         if !ShellCheck.isZsh() {
             print("Warning: zenv is designed for Zsh. Some features may not work correctly.")
         }
-        let store = KeychainStore.fromEnvironment()
+        let store = try LiveStore.open()
         do {
             guard let form = try SetForm.run(prompt: TerminalPrompt()) else {
                 return
@@ -187,7 +201,7 @@ struct Ls: ParsableCommand {
     )
 
     func run() throws {
-        let keys = try KeychainStore.fromEnvironment().listKeys()
+        let keys = try LiveStore.open().listKeys()
         print(ListTable.render(keys: keys))
     }
 }
@@ -202,7 +216,7 @@ struct Rm: ParsableCommand {
 
     func run() throws {
         do {
-            try KeychainStore.fromEnvironment().delete(key: key)
+            try LiveStore.open().delete(key: key)
         } catch KeychainStoreError.unexpectedStatus(let status) where status == errSecItemNotFound {
             print("Error: environment variable \(key.uppercased()) not found")
             throw ExitCode.failure
@@ -255,7 +269,7 @@ struct Migrate: ParsableCommand {
             vars: selected,
             zshrcURL: paths.zshrc,
             backupDir: paths.backupDir,
-            store: KeychainStore.fromEnvironment()
+            store: try LiveStore.open()
         )
         print("Migration complete!")
         print("  - Migrated: \(result.migrated.count) variable(s)")

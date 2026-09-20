@@ -25,7 +25,7 @@ struct HookLiveTests {
         env["HOME"] = home.path
         env["ZDOTDIR"] = home.path
         env["ZENV_HOME"] = home.path
-        env["ZENV_SERVICE"] = "dev.hcuong.zenv.live"
+        env["ZENV_SERVICE"] = "me.hcuong.zenv.live"
         env["ZENV_KEYCHAIN"] = keychain
         env["SHELL"] = "/bin/zsh"
         env["PATH"] = "\(bin.deletingLastPathComponent().path):/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin"

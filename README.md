@@ -7,7 +7,7 @@ Secure environment variable manager for macOS Zsh. Secrets live in the login Key
 - **No shell history leaks.** Masked prompts keep values out of `.zsh_history`.
 - **Masked display.** `env` and `printenv` show `********`.
 - **Apps still get real values.** Child processes inherit the real environment.
-- **Keychain storage.** Generic passwords under service `dev.hcuong.zenv`.
+- **Keychain storage.** Generic passwords under service `me.hcuong.zenv`.
 - **Migration.** Move `export` lines from `~/.zshrc` into Keychain.
 
 ## Installation

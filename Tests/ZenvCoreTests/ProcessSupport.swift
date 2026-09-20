@@ -37,7 +37,7 @@ enum ZenvProcess {
         env["HOME"] = home.path
         env["ZDOTDIR"] = home.path
         env["ZENV_HOME"] = home.path
-        env["ZENV_SERVICE"] = "dev.hcuong.zenv.live"
+        env["ZENV_SERVICE"] = "me.hcuong.zenv.live"
         env["ZENV_KEYCHAIN"] = keychain
         env["SHELL"] = "/bin/zsh"
         let binDir = findZenv()?.deletingLastPathComponent().path ?? "/usr/bin"

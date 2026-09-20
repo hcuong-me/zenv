@@ -43,7 +43,7 @@ swift test
 
 ## Storage Model
 
-- **Read/Write:** login Keychain, service `dev.hcuong.zenv`, account = uppercase key
+- **Read/Write:** login Keychain, service `me.hcuong.zenv`, account = uppercase key
 - **Hook:** `~/.zshrc` markers `# --- zenv safe display start/end ---`
 - **Load:** `eval "$(zenv env)"` in interactive Zsh only
 - **Import:** leftover `export KEY="value"` lines in `~/.zshenv` via `zenv doctor`

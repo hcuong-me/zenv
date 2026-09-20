@@ -18,7 +18,7 @@ trap cleanup EXIT
 export HOME="$WORKDIR"
 export ZDOTDIR="$WORKDIR"
 export ZENV_HOME="$WORKDIR"
-export ZENV_SERVICE="dev.hcuong.zenv.live.$$"
+export ZENV_SERVICE="me.hcuong.zenv.live.$$"
 export ZENV_KEYCHAIN="$WORKDIR/zenv.keychain"
 export SHELL="/bin/zsh"
 export PATH="$(dirname "$BIN"):$PATH"

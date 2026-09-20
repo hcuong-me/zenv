@@ -33,7 +33,7 @@ graph TD
 
 ## Data flow
 
-`zenv set` writes `kSecClassGenericPassword` with service `dev.hcuong.zenv`. `zenv doctor` appends a hook that runs `eval "$(command zenv env)"` and builds `_ZENV_KEYS` from `zenv keys`. New interactive shells get the variables. `zsh -c` does not.
+`zenv set` writes `kSecClassGenericPassword` with service `me.hcuong.zenv`. `zenv doctor` appends a hook that runs `eval "$(command zenv env)"` and builds `_ZENV_KEYS` from `zenv keys`. Items left under `dev.hcuong.zenv` are copied over on the next `env`/`doctor` then deleted from the old service. New interactive shells get the variables. `zsh -c` does not.
 
 ## Files
 
