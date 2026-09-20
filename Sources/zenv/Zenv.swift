@@ -65,6 +65,7 @@ struct Put: ParsableCommand {
 struct Delete: ParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Delete a stored secret (test helper)",
+        commandName: "kc-delete",
         shouldDisplay: false
     )
 

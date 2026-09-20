@@ -27,7 +27,7 @@ struct StoreLiveTests {
             #expect(updated.stdout.contains("sk_live_2"))
             #expect(!updated.stdout.contains("sk_live_1"))
 
-            _ = try requireOK(bin, ["delete", "--key", "STRIPE_KEY"], env: env)
+            _ = try requireOK(bin, ["kc-delete", "--key", "STRIPE_KEY"], env: env)
             let after = try requireOK(bin, ["keys"], env: env)
             #expect(after.stdout.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
