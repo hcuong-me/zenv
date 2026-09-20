@@ -179,6 +179,9 @@ struct Set: ParsableCommand {
         } catch SetFormError.emptyValue {
             print("Error: value cannot be empty")
             throw ExitCode.failure
+        } catch KeychainStoreError.reservedKey(let key) {
+            print("Error: \(key) is reserved")
+            throw ExitCode.failure
         }
     }
 }

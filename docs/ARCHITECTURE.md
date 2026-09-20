@@ -33,7 +33,7 @@ graph TD
 
 ## Data flow
 
-`zenv set` writes `kSecClassGenericPassword` with service `me.hcuong.zenv`. `zenv doctor` appends a hook that runs `eval "$(command zenv env)"` and builds `_ZENV_KEYS` from `zenv keys`. New interactive shells get the variables. `zsh -c` does not.
+`zenv set` writes one `kSecClassGenericPassword` item (service `me.hcuong.zenv`, account `__ZENV_BUNDLE__`) whose value is a JSON map of all keys. That keeps Keychain ACL prompts to one Allow for the whole store. Leftover one-account-per-key items are merged into the bundle on first read. `zenv doctor` appends a hook that runs `eval "$(command zenv env)"` and builds `_ZENV_KEYS` from `zenv keys`. New interactive shells get the variables. `zsh -c` does not.
 
 ## Files
 

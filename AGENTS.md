@@ -43,7 +43,8 @@ swift test
 
 ## Storage Model
 
-- **Read/Write:** login Keychain, service `me.hcuong.zenv`, account = uppercase key
+- **Read/Write:** login Keychain, service `me.hcuong.zenv`, single account `__ZENV_BUNDLE__` (JSON map of uppercase keys → values)
+- **Adopt:** leftover one-account-per-key items under the same service merge into the bundle on first read
 - **Hook:** `~/.zshrc` markers `# --- zenv safe display start/end ---`
 - **Load:** `eval "$(zenv env)"` in interactive Zsh only
 
