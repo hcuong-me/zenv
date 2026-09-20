@@ -8,14 +8,14 @@ Migration is also where the system encounters the messiness of real shell files.
 
 Migration moves `export` lines from `~/.zshrc` into Keychain, then removes them from `~/.zshrc`.
 
-The operation is a ratchet because it only turns one way. The reverse — moving secrets from `~/.zshenv` back to `~/.zshrc` — is not supported, and would be a regression of every guarantee zenv provides. Tools that move state to a better home should resist the temptation to be symmetric. Symmetry sounds principled; in practice it lets users undo improvements by accident.
+The operation is a ratchet because it only turns one way. The reverse — moving secrets from Keychain back into `~/.zshrc` — is not supported.
 
 ```mermaid
 sequenceDiagram
     participant U as User
     participant Z as zenv migrate
     participant ZR as ~/.zshrc (parse + edit)
-    participant ZE as ~/.zshenv (write)
+    participant KC as Keychain
     participant BU as ~/.zenv/backups/
 
     Z->>ZR: parse export lines (skip zenv section)
@@ -25,9 +25,8 @@ sequenceDiagram
     U-->>Z: confirm
     Z->>BU: backup ~/.zshrc (timestamped)
     Z->>ZR: remove migrated lines
-    Z->>ZE: write each selected secret
-    Z->>ZE: chmod 0600
-    Z-->>U: results + "source ~/.zshenv"
+    Z->>KC: put each selected secret
+    Z-->>U: results + "source ~/.zshrc"
 ```
 
 The flow has the shape of every zenv command — check, interact, perform, report — but with one extra step that the other commands do not have: the parse. Migration reads a file zenv did not write, and that is the interesting part.

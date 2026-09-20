@@ -137,7 +137,7 @@ One more detail of the form is worth noticing: cancellation is silent and safe. 
 
 This is the same *silent-cancel convention* that the next chapter will examine in the command layer, but it is worth flagging here because of what it implies for the input path. A partially-entered secret is not stored. A form aborted before the value is submitted leaves no trace — no temp file, no partial write, no "are you sure you want to discard your input" prompt that would itself display the value. The form is atomic from the user's perspective: either it completes and the secret is stored, or it is aborted and nothing happened.
 
-This is a small thing, but it is the right small thing. The input path's job is to take a secret from the user's head and land it in `~/.zshenv` without leaking it on the way. Atomicity — either the whole trip happens or none of it does — is part of what makes that path trustworthy.
+This is a small thing, but it is the right small thing. The input path's job is to take a secret from the user's head and land it in Keychain without leaking it on the way. Atomicity — either the whole trip happens or none of it does — is part of what makes that path trustworthy.
 
 ## Apply This
 

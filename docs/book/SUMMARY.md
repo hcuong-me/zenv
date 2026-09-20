@@ -8,12 +8,12 @@
 
 - [Chapter 1 — The Parent–Child Wall](./ch01-parent-child-wall.md)
   - Why a CLI cannot secure a shell secret the naive way
-  - How one constraint forces the entire file-plus-sourcing design
+  - How Door 2 (`eval "$(zenv env)"` in `~/.zshrc`) is the load path
 - [Chapter 2 — The Threat Model, and the Bet](./ch02-threat-model.md)
   - Naming the thesis; what zenv defends against and what it refuses to
   - The road not taken: why not encrypt at rest
 - [Chapter 3 — The Storage Layer](./ch03-storage-layer.md)
-  - CRUD on a shell file via regex, treating `~/.zshenv` as a database
+  - Historical: CRUD on a shell file. Live store is Keychain.
   - Atomic writes and the commutativity of escape ordering
 
 ## Part II — The Core Bet in Practice
@@ -26,20 +26,20 @@
   - The TUI as a security boundary; masked entry means no argv, no history
   - The road not taken: why there is no `set KEY VALUE` flag form
 - [Chapter 6 — The Command Surface](./ch06-command-surface.md)
-  - The Cobra layer and the silent-cancel convention
+  - The Cobra-era command layer; live CLI is ArgumentParser
   - Error-wrapping discipline and the `source` reminder as honest UX
 
 ## Part III — Operating and Sustaining the System
 > *A secret manager is a lifeboat, not a statue — it has to be re-checked.*
 
 - [Chapter 7 — Migration](./ch07-migration.md)
-  - The one-way ratchet from `~/.zshrc` to `~/.zshenv`
+  - The one-way ratchet from `~/.zshrc` exports into Keychain
   - The denylist as judgment, the backup as safety net
 - [Chapter 8 — Doctor, and the Honesty Loop](./ch08-doctor.md)
   - Secrets rot; `doctor` is the closed-loop repair
   - Confirm-before-mutate as a UI principle
 - [Chapter 9 — Architecture as Invariant](./ch09-architecture.md)
-  - The four-layer model and why linting dependency direction matters
+  - Two live packages (`zenv`, `ZenvCore`) and why linting import direction matters
   - Why discipline at small scale is the load-bearing wall
 
 ## Epilogue

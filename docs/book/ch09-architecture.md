@@ -32,7 +32,7 @@ graph TD
 
 The table is small enough to memorize, and that is the point. A contributor can keep the entire dependency contract in their head. The contract has two hard invariants: layer 0 imports nothing internal, and layer 1 never imports layer 2. Everything else follows from where each package sits.
 
-The layering is not load-bearing in the technical sense — the program would compile and run if `internal/storage` imported `internal/tui`. It is load-bearing in the engineering sense: it is what keeps the program modifiable, testable, and honest about its boundaries.
+The layering is not load-bearing in the technical sense — the program would compile and run if `KeychainStore` imported ArgumentParser. It is load-bearing in the engineering sense: it is what keeps the program modifiable, testable, and honest about its boundaries.
 
 ## Why layer at this scale
 
@@ -48,35 +48,25 @@ The case for layering at small scale rests on three claims, each of which is wor
 
 The third claim is the most important and the most contested. It says that *the value of architectural discipline is paid forward*. The cost is paid now, by the small team that has to respect rules it could safely bend. The benefit is paid later, by the larger team that inherits a codebase whose boundaries held. The asymmetry is uncomfortable but correct: the team that bends the rules at small scale is rarely the team that pays for the bending, because by the time the bending hurts, the benders have moved on.
 
-## What `internal/` does and does not buy
+## What Swift modules do and do not buy
 
-Go's `internal/` directory convention is part of the story here, and worth being precise about. A package under `internal/` can only be imported by packages within the directory subtree rooted at the parent of `internal/`. For zenv, that means `internal/storage`, `internal/shell`, and `internal/tui` can only be imported by code within the zenv module itself. External projects cannot reach in and depend on them.
+The Go port used `internal/` so other modules could not import `storage`, `shell`, or `tui`. That wall faced outward. It did not stop those packages from importing each other. Live code dropped `internal/`. The outward wall is now “this is an application, not a library.” The inward wall is `make lint-arch`: `ZenvCore` must not import ArgumentParser.
 
 ```mermaid
 graph TD
-    subgraph "zenv module"
-        CMD["cmd/commands"]
-        STOR["internal/storage"]
-        SHELL["internal/shell"]
-        TUI["internal/tui"]
+    subgraph "zenv package"
+        CMD["Sources/zenv"]
+        CORE["ZenvCore"]
     end
-    subgraph "external projects"
-        EXT["another Go module"]
+    subgraph "other apps"
+        EXT["another Swift package"]
     end
-    CMD --> STOR
-    CMD --> SHELL
-    CMD --> TUI
-    EXT -.->|"FORBIDDEN by Go's internal rule"| STOR
-    EXT -.->|"FORBIDDEN"| SHELL
-    EXT -.->|"FORBIDDEN"| TUI
+    CMD --> CORE
+    EXT -.->|"no public API promised"| CORE
     style EXT fill:#f8d7da,stroke:#721c24
 ```
 
-What `internal/` does is prevent *external* coupling. A downstream tool cannot depend on zenv's storage layer's internals, which means zenv can refactor that layer freely without breaking anyone outside the module. This is genuinely valuable and is the right default for any package that is not deliberately a public library.
-
-What `internal/` does *not* do is prevent *internal* coupling. Nothing in the Go language stops `internal/storage` from importing `internal/tui`. The language gives you a wall facing outward; it does not give you walls between the rooms inside the house. Those internal walls have to be built and maintained by the project itself, through convention and, in zenv's case, through a lint pass.
-
-This distinction is worth pulling out because it is often conflated. Teams sometimes believe that putting packages under `internal/` is sufficient architectural discipline, on the grounds that "at least the outside world cannot depend on our internals." It is sufficient discipline against the outside world. It is no discipline at all against the inside, which is where most of the damaging coupling happens. The internal walls — the ones between `storage`, `shell`, `tui`, and `commands` — are the ones that have to be enforced by something other than the language.
+Nothing in Swift stops `KeychainStore.swift` from importing ArgumentParser types. `scripts/lint-deps.sh` is the inner wall.
 
 ## Enforcement: the lint pass that does the work
 
