@@ -35,3 +35,7 @@ dist/
 .agents/
 .claude/
 specs/
+
+# Swift
+.build/
+.swiftpm/
