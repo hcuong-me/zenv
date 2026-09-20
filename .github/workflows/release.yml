@@ -21,11 +21,15 @@ jobs:
         id: get_version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      - name: Embed version from tag
+        run: bash scripts/embed-version.sh "${{ steps.get_version.outputs.version }}"
+
       - name: Build binary
         run: |
           mkdir -p dist
           swift build -c release
           cp -f .build/release/zenv dist/zenv
+          ./dist/zenv -v | grep -F "zenv version ${{ steps.get_version.outputs.version }}"
 
       - name: Calculate SHA256
         id: get_sha

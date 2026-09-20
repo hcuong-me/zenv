@@ -5,7 +5,7 @@ import ZenvCore
 
 @main
 struct Zenv: ParsableCommand {
-    static let version = "1.0.0"
+    static let version = "1.0.1"
 
     static let configuration = CommandConfiguration(
         commandName: "zenv",

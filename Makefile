@@ -1,7 +1,13 @@
 .PHONY: build test lint lint-arch lint-md lint-all clean fmt
 
+# Optional: VERSION=1.0.2 make build — embeds into Sources/zenv/Zenv.swift first.
+VERSION ?=
+
 build:
 	mkdir -p dist
+ifneq ($(VERSION),)
+	@bash scripts/embed-version.sh "$(VERSION)"
+endif
 	swift build -c release
 	cp -f .build/release/zenv dist/zenv
 
